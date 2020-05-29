@@ -774,8 +774,8 @@ BOOL _sessionInterrupted = NO;
 }
 
 
-/// Set the AVCaptureDevice's Bias values based on RNCamera's 'exposure' value,
-/// which is a float between -8 and 8 if defined by the user or -0 to indicate that no
+/// Set the AVCaptureDevice's Bias values based on RNCamera's 'bias' value,
+/// which is a float between -8 and 8 if defined by the user or 0 to indicate that no
 /// selection is active.
 
 - (void)updateBias
