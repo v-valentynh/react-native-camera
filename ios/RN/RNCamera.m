@@ -773,6 +773,37 @@ BOOL _sessionInterrupted = NO;
     [device unlockForConfiguration];
 }
 
+
+/// Set the AVCaptureDevice's Bias values based on RNCamera's 'exposure' value,
+/// which is a float between -8 and 8 if defined by the user or -0 to indicate that no
+/// selection is active.
+
+- (void)updateBias
+{
+    AVCaptureDevice *device = [self.videoCaptureDeviceInput device];
+    NSError *error = nil;
+
+    if(device == nil){
+        return;
+    }
+
+    if (![device lockForConfiguration:&error]) {
+        if (error) {
+            RCTLogError(@"%s: %@", __func__, error);
+        }
+        return;
+    }
+
+    if(self.bias < device.minExposureTargetBias || self.bias > device.maxExposureTargetBias){
+        [device setExposureTargetBias:0.0 completionHandler:nil];
+        [device unlockForConfiguration];
+        return;
+    }
+
+    [device setExposureTargetBias:self.bias completionHandler:nil];
+    [device unlockForConfiguration];
+}
+
 - (void)updatePictureSize
 {
     // make sure to call this function so the right default is used if

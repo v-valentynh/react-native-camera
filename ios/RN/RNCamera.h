@@ -36,6 +36,7 @@
 @property(assign, nonatomic) float focusDepth;
 @property(assign, nonatomic) NSInteger whiteBalance;
 @property(assign, nonatomic) float exposure;
+@property(assign, nonatomic) float bias;
 @property(assign, nonatomic) float exposureIsoMin;
 @property(assign, nonatomic) float exposureIsoMax;
 @property(assign, nonatomic) AVCaptureSessionPreset pictureSize;
@@ -66,6 +67,7 @@
 - (void)updateZoom;
 - (void)updateWhiteBalance;
 - (void)updateExposure;
+- (void)updateBias;
 - (void)updatePictureSize;
 - (void)updateCaptureAudio;
 // Face Detection props
