@@ -76,7 +76,7 @@ RCT_EXPORT_VIEW_PROPERTY(onTouch, RCTDirectEventBlock);
                      @"portrait": @(RNCameraOrientationPortrait),
                      @"portraitUpsideDown": @(RNCameraOrientationPortraitUpsideDown)
                      },
-             @"AVVideoCodecTypeHEVC": [[self class] validCodecTypes],
+             @"VideoCodec": [[self class] validCodecTypes],
              @"BarCodeType" : [[self class] validBarCodeTypes],
              @"FaceDetection" : [[self class] faceDetectorConstants],
              @"VideoStabilization": [[self class] validVideoStabilizationModes],
