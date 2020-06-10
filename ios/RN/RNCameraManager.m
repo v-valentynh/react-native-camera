@@ -8,6 +8,7 @@
 #import <React/RCTLog.h>
 #import <React/RCTUtils.h>
 #import <React/UIView+React.h>
+#import "UIImage+HEIC.h"
 
 @implementation RNCameraManager
 
@@ -360,6 +361,9 @@ RCT_REMAP_METHOD(takePicture,
             if (options[@"path"]) {
                 path = options[@"path"];
             }
+            else if (@available(iOS 11, *)){
+                path = [RNFileSystem generatePathInDirectory:[[RNFileSystem cacheDirectoryPath] stringByAppendingPathComponent:@"Camera"] withExtension:@".heic"];
+            }
             else{
                 path = [RNFileSystem generatePathInDirectory:[[RNFileSystem cacheDirectoryPath] stringByAppendingPathComponent:@"Camera"] withExtension:@".jpg"];
             }
@@ -370,16 +374,27 @@ RCT_REMAP_METHOD(takePicture,
             }
 
             [view onPictureTaken:@{}];
+            
+            if (@available(iOS 11, *)) {
 
-            NSData *photoData = UIImageJPEGRepresentation(generatedPhoto, quality);
-            if (![options[@"doNotSave"] boolValue]) {
-                response[@"uri"] = [RNImageUtils writeImage:photoData toPath:path];
+                NSData *photoData = tj_UIImageHEICRepresentation(generatedPhoto, quality);
+
+                if (![options[@"doNotSave"] boolValue]) {
+                    response[@"uri"] = [RNImageUtils writeImage:photoData toPath:path];
+                }
+            }else{
+                NSData *photoData = UIImageJPEGRepresentation(generatedPhoto, quality);
+                if (![options[@"doNotSave"] boolValue]) {
+                    response[@"uri"] = [RNImageUtils writeImage:photoData toPath:path];
+                }
+                if ([options[@"base64"] boolValue]) {
+                    response[@"base64"] = [photoData base64EncodedStringWithOptions:0];
+                }
             }
+
             response[@"width"] = @(generatedPhoto.size.width);
             response[@"height"] = @(generatedPhoto.size.height);
-            if ([options[@"base64"] boolValue]) {
-                response[@"base64"] = [photoData base64EncodedStringWithOptions:0];
-            }
+
             if (useFastMode) {
                 [view onPictureSaved:@{@"data": response, @"id": options[@"id"]}];
             } else {
