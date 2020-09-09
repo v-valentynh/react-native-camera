@@ -248,12 +248,6 @@ RCT_CUSTOM_VIEW_PROPERTY(exposure, NSNumber, RNCamera)
     [view updateExposure];
 }
 
-RCT_CUSTOM_VIEW_PROPERTY(bias, NSNumber, RNCamera)
-{
-    [view setBias:[RCTConvert float:json]];
-    [view updateBias];
-}
-
 RCT_CUSTOM_VIEW_PROPERTY(pictureSize, NSString *, RNCamera)
 {
     [view setPictureSize:[[self class] pictureSizes][[RCTConvert NSString:json]]];
