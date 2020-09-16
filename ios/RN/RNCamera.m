@@ -866,7 +866,12 @@ BOOL _sessionInterrupted = NO;
         
         @try {
             AVCapturePhotoSettings *photoSettings = [AVCapturePhotoSettings photoSettingsWithFormat:@{AVVideoCodecKey : AVVideoCodecTypeHEVC}];
-            [photoSettings setFlashMode:self.flashMode];
+            AVCaptureDevice *device = [self.videoCaptureDeviceInput device];
+
+            if (self.flashMode != RNCameraFlashModeTorch && device != nil && device.hasFlash && [device isFlashModeSupported:self.flashMode]) {
+                [photoSettings setFlashMode:self.flashMode];
+            }
+            
             [self.photoOutput capturePhotoWithSettings:photoSettings delegate:self];
             self.photoTakenResolve = resolve;
             self.photoTakenReject = reject;
