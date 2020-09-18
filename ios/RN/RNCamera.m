@@ -8,6 +8,7 @@
 #import <React/UIView+React.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 #import  "RNSensorOrientationChecker.h"
+#import "UIImage+HEIC.h"
 @interface RNCamera ()
 
 @property (nonatomic, weak) RCTBridge *bridge;
@@ -22,6 +23,7 @@
 
 @property (nonatomic, strong) RCTPromiseResolveBlock photoTakenResolve;
 @property (nonatomic, strong) RCTPromiseRejectBlock photoTakenReject;
+@property (nonatomic, strong) NSDictionary *options;
 
 @property (nonatomic, copy) RCTDirectEventBlock onCameraReady;
 @property (nonatomic, copy) RCTDirectEventBlock onAudioInterrupted;
@@ -864,9 +866,16 @@ BOOL _sessionInterrupted = NO;
         
         @try {
             AVCapturePhotoSettings *photoSettings = [AVCapturePhotoSettings photoSettingsWithFormat:@{AVVideoCodecKey : AVVideoCodecTypeHEVC}];
+            AVCaptureDevice *device = [self.videoCaptureDeviceInput device];
+
+            if (self.flashMode != RNCameraFlashModeTorch && device != nil && device.hasFlash && [device isFlashModeSupported:self.flashMode]) {
+                [photoSettings setFlashMode:self.flashMode];
+            }
+            
             [self.photoOutput capturePhotoWithSettings:photoSettings delegate:self];
             self.photoTakenResolve = resolve;
             self.photoTakenReject = reject;
+            self.options = options;
         } @catch (NSException *exception) {
             reject(
                    @"E_IMAGE_CAPTURE_FAILED",
@@ -2054,6 +2063,7 @@ BOOL _sessionInterrupted = NO;
     self.deviceOrientation = nil;
     self.orientation = nil;
     self.isRecordingInterrupted = NO;
+    self.options = nil;
 
     if ([self.textDetector isRealDetector] || [self.faceDetector isRealDetector]) {
         [self cleanupMovieFileCapture];
@@ -2367,6 +2377,12 @@ API_AVAILABLE(ios(11.0)){
     if (error == nil && self.photoTakenResolve != nil) {
         
         NSData *imageData = [photo fileDataRepresentation];
+        
+        UIImage *takenImage = [UIImage imageWithData:imageData];
+        if (self.options && [self.options[@"width"] integerValue]) {
+            takenImage = [RNImageUtils scaleImage:takenImage toWidth:[self.options[@"width"] integerValue]];
+        }
+        
         NSString *path = [RNFileSystem generatePathInDirectory:[[RNFileSystem cacheDirectoryPath] stringByAppendingPathComponent:@"Camera"] withExtension:@".heic"];
 
         NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
@@ -2374,8 +2390,9 @@ API_AVAILABLE(ios(11.0)){
         void (^resolveBlock)(void) = ^() {
             self.photoTakenResolve(result);
         };
-
-        result[@"uri"] = [RNImageUtils writeImage:imageData toPath:path];
+        NSData *croppedImage = tj_UIImageHEICRepresentation(takenImage, 1);
+        
+        result[@"uri"] = [RNImageUtils writeImage:croppedImage toPath:path];
         result[@"deviceOrientation"] = @([self.deviceOrientation integerValue]);
 
 
