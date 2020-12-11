@@ -1058,7 +1058,7 @@ BOOL _sessionInterrupted = NO;
                             path = options[@"path"];
                         }
                         else{
-                            path = [RNFileSystem generatePathInDirectory:[[RNFileSystem cacheDirectoryPath] stringByAppendingPathComponent:@"Camera"] withExtension:@".jpg"];
+                            path = [self getImagePath];
                         }
                         
                         if (![options[@"doNotSave"] boolValue]) {
@@ -2371,6 +2371,16 @@ BOOL _sessionInterrupted = NO;
     return self.movieFileOutput != nil ? self.movieFileOutput.isRecording : NO;
 }
 
+- (NSString *)getImagePath {
+    NSString *bundleId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];
+    NSString *extension = @".jpg";
+    if (@available(iOS 11.0, *)) {
+        extension = @".heic";
+    }
+    NSString *path = [RNFileSystem generatePathInDirectory:[[RNFileSystem documentsDirectoryPath] stringByAppendingPathComponent:bundleId] withExtension:extension];
+    return path;
+}
+
 #pragma mark - AVCapturePhotoCaptureDelegate
 - (void)captureOutput:(AVCapturePhotoOutput *)output didFinishProcessingPhoto:(AVCapturePhoto *)photo error:(nullable NSError *)error
 API_AVAILABLE(ios(11.0)){
@@ -2383,7 +2393,7 @@ API_AVAILABLE(ios(11.0)){
             takenImage = [RNImageUtils scaleImage:takenImage toWidth:[self.options[@"width"] integerValue]];
         }
         
-        NSString *path = [RNFileSystem generatePathInDirectory:[[RNFileSystem cacheDirectoryPath] stringByAppendingPathComponent:@"Camera"] withExtension:@".heic"];
+        NSString *path = [self getImagePath];
 
         NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
 

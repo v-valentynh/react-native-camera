@@ -115,4 +115,6 @@
 - (bool)isRecording;
 - (void)onSubjectAreaChanged:(NSDictionary *)event;
 
+- (NSString *)getImagePath;
+
 @end
