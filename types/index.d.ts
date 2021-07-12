@@ -171,10 +171,10 @@ export interface RNCameraProps {
   /** iOS only */
   onAudioInterrupted?(): void;
   onAudioConnected?(): void;
-  onTap?(origin:Point):void;
-  onDoubleTap?(origin:Point):void;
+  onTap?(origin: Point): void;
+  onDoubleTap?(origin: Point): void;
   /** Use native pinch to zoom implementation*/
-  useNativeZoom?:boolean;
+  useNativeZoom?: boolean;
   /** Value: float from 0 to 1.0 */
   zoom?: number;
   /** iOS only. float from 0 to any. Locks the max zoom value to the provided value
@@ -413,6 +413,8 @@ export interface TakePictureResponse {
   exif?: { [name: string]: any };
   pictureOrientation: number;
   deviceOrientation: number;
+  isRecordingInterruption: boolean;
+  interruptionReason: number;
 }
 
 interface RecordOptions {

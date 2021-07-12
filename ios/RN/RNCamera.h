@@ -44,6 +44,7 @@
 @property(assign, nonatomic) AVCaptureSessionPreset pictureSize;
 @property(nonatomic, assign) BOOL isReadingBarCodes;
 @property(nonatomic, assign) BOOL isRecordingInterrupted;
+@property(nonatomic, assign) NSInteger interruptionReason;
 @property(nonatomic, assign) BOOL isDetectingFaces;
 @property(nonatomic, assign) BOOL canReadText;
 @property(nonatomic, assign) BOOL canDetectFaces;
