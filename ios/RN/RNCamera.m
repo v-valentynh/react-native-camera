@@ -847,9 +847,19 @@ BOOL _sessionInterrupted = NO;
 - (void)takePicture:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
     // if video device is not set, reject
-    if(self.videoCaptureDeviceInput == nil || !self.session.isRunning){
+    if(self.videoCaptureDeviceInput == nil) {
         reject(@"E_IMAGE_CAPTURE_FAILED", @"Camera is not ready.", nil);
         return;
+    }
+    if (!self.session.isRunning){
+        // Manually restarting the session since it must
+        // have been stopped due to an error.
+        // TODO: ideally this should be handled as part of sessionRuntimeError, look if related observer might got removed
+        dispatch_async(self.sessionQueue, ^{
+             _sessionInterrupted = NO;
+            [self.session startRunning];
+            [self onReady:nil];
+        });
     }
 
     if (!self.deviceOrientation) {
@@ -1796,17 +1806,18 @@ BOOL _sessionInterrupted = NO;
     // get event info and fire RN event if our session was interrupted
     // due to audio being taken away.
     NSDictionary *userInfo = notification.userInfo;
-    NSInteger type = [[userInfo valueForKey:AVCaptureSessionInterruptionReasonKey] integerValue];
+    self.interruptionReason = [[userInfo valueForKey:AVCaptureSessionInterruptionReasonKey] integerValue];
 
-    if(type == AVCaptureSessionInterruptionReasonAudioDeviceInUseByAnotherClient){
-        // if we have audio, stop it so preview resumes
-        // it will eventually be re-loaded the next time recording
-        // is requested, although it will flicker.
-        dispatch_async(self.sessionQueue, ^{
-            [self removeAudioCaptureSessionInput];
-        });
-
-    }
+// removing for now as we don't use preview
+//    if(type == AVCaptureSessionInterruptionReasonAudioDeviceInUseByAnotherClient){
+//        // if we have audio, stop it so preview resumes
+//        // it will eventually be re-loaded the next time recording
+//        // is requested, although it will flicker.
+//        dispatch_async(self.sessionQueue, ^{
+//            [self removeAudioCaptureSessionInput];
+//        });
+//
+//    }
 
 }
 
@@ -2063,6 +2074,7 @@ BOOL _sessionInterrupted = NO;
     self.deviceOrientation = nil;
     self.orientation = nil;
     self.isRecordingInterrupted = NO;
+    self.interruptionReason = 0;
     self.options = nil;
 
     if ([self.textDetector isRealDetector] || [self.faceDetector isRealDetector]) {
@@ -2377,6 +2389,7 @@ API_AVAILABLE(ios(11.0)){
     if (error == nil && self.photoTakenResolve != nil) {
         
         NSData *imageData = [photo fileDataRepresentation];
+        CGFloat quality = 1;
         
         UIImage *takenImage = [UIImage imageWithData:imageData];
         if (self.options && [self.options[@"width"] integerValue]) {
@@ -2390,11 +2403,19 @@ API_AVAILABLE(ios(11.0)){
         void (^resolveBlock)(void) = ^() {
             self.photoTakenResolve(result);
         };
-        NSData *croppedImage = tj_UIImageHEICRepresentation(takenImage, 1);
+        
+        if (self.options && [self.options[@"quality"] integerValue]) {
+            quality = [self.options[@"quality"] integerValue];
+        }
+        NSData *croppedImage = tj_UIImageHEICRepresentation(takenImage, quality);
         
         result[@"uri"] = [RNImageUtils writeImage:croppedImage toPath:path];
         result[@"deviceOrientation"] = @([self.deviceOrientation integerValue]);
-
+        result[@"videoOrientation"] = @([self.orientation integerValue]);
+        result[@"isRecordingInterrupted"] = @(self.isRecordingInterrupted); // should be NO at this point. TODO: add this as userInfo when getting an error
+        result[@"interruptionReason"] = @(self.interruptionReason); // previous interruption (history). TODO: add this as userInfo when getting an error
+        result[@"width"] = @(takenImage.size.width);
+        result[@"height"] = @(takenImage.size.height);
 
         resolveBlock();
     } else if (self.photoTakenReject != nil) {
